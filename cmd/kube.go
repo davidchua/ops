@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -29,6 +32,15 @@ var (
 
 			var selection []string
 
+			// sort by last access date!
+			sort.Slice(files, func(i, j int) bool {
+
+				a := files[i].Sys().(*syscall.Stat_t).Atim.Sec
+				b := files[j].Sys().(*syscall.Stat_t).Atim.Sec
+
+				return a > b
+			})
+
 			for _, file := range files {
 				selection = append(selection, fmt.Sprintf("%s/.kube/%s", homeDir, file.Name()))
 			}
@@ -36,7 +48,7 @@ var (
 			prompt := promptui.Select{
 				Label: "Select Kubeconfig",
 				Items: selection,
-				Size:  10,
+				Size:  15,
 			}
 
 			_, result, err := prompt.Run()
@@ -50,7 +62,13 @@ var (
 			os.Remove(kubeConfigPath)
 			err = os.Symlink(result, kubeConfigPath)
 			if err != nil {
-				log.Fatalf("error setting symlink", err)
+				log.Fatalf("error setting symlink %#v", err)
+			}
+			// Note: Chtimes may have an issue with timedrift on Azure/SMB shares
+			// see: https://github.com/golang/go/issues/31880
+			err = os.Chtimes(result, time.Now(), time.Time{})
+			if err != nil {
+				log.Fatalf("error touching %#v", err)
 			}
 		},
 	}
