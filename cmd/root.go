@@ -4,9 +4,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
+
+	"embed"
 )
 
 var (
+	tmpl embed.FS
 	// Used for flags.
 	clog     *logrus.Logger
 	loglevel string
@@ -27,7 +30,8 @@ var (
 	}
 )
 
-func Execute() error {
+func Execute(templates embed.FS) error {
+	tmpl = templates
 	return rootCmd.Execute()
 }
 

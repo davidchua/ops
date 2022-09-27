@@ -5,9 +5,14 @@ import (
 	"log"
 	"os"
 
+	"embed"
+
 	"github.com/davidchua/ops/cmd"
 	"github.com/spf13/viper"
 )
+
+//go:embed templates
+var tmpl embed.FS
 
 func main() {
 	viper.SetConfigName(".ops")
@@ -31,5 +36,5 @@ func main() {
 			// Config file was found but another error was produced
 		}
 	}
-	cmd.Execute()
+	cmd.Execute(tmpl)
 }
